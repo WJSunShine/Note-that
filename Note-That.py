@@ -18,19 +18,19 @@ def add_data(title, text, datetimes):
     data.commit()
     data.close()
 
-def tags(tag, title):
+def tags(tag, title=None):
     """
     Add tag and title into database 
     """
     data = sqlite3.connect('Database.db')
     cur = data.cursor()
     cur.execute('''CREATE TABLE IF NOT EXISTS Tags
-    (Tags text, title text)''')
+    (Python text, Diary text, Programming text, Homework text, Idea text)''')
     try:
         cur.execute("ALTER TABLE Tags ADD COLUMN '%s' text" % tag) # add new tag column
     except:
         pass
-    cur.execute("INSERT OR REPLACE INTO Tags ('%s') VALUES ('%s' text)" % (tag, title))
+    cur.execute("INSERT OR REPLACE INTO Tags ('%s') VALUES ('%s')" % (tag, title))
     data.commit()
     data.close()
 
@@ -40,12 +40,22 @@ def delete_data(tag_name, tag, title):
     """
     data = sqlite3.connect('Database.db')
     cur = data.cursor()
-    tag_name = "DELETE FROM Tags WHERE '%s' = '%s'" % (tag_name, tag)
-    title_name = "DELETE FROM NoteStorage WHERE Title = '%s'" % title
+    tag_name = "DELETE FROM Tags WHERE %s = %s" % (tag_name, tag)
+    title_name = "DELETE FROM NoteStorage WHERE Title = %s" % title
     cur.execute(tag_name)
     cur.execute(title_name)
     data.commit()
     data.close()
+
+def date():
+    """
+    Return current time
+    """
+    day = datetime.date.today().strftime("%d")
+    month = datetime.date.today().strftime("%B")
+    year = datetime.date.today().strftime("%Y")
+    date_now = "%s %s %s" % (day, month, year)
+    return date_now
     
 
 class NoteStorage(Tk):
@@ -77,22 +87,26 @@ class Findpage(Tk):
 
 class Notepage(Tk):
 
-    def __init__(self, text, *args, **kwargs):
-        Tk.__init__(self, text, *args, **kwargs)
-        self.text = text
+    def __init__(self, text_title, text_note, *args, **kwargs):
+        Tk.__init__(self, text_title, text_note, *args, **kwargs)
+        self.text_note = text_note
+        self.text_title = text_title
 
     def note_pages(self, note_page):
         """
         Display a Note when add new note or edit note
         """
-        #self.decorate = Frame(self, bg='red', width=400, height=35)
-        #self.decorate.grid(row=0, column=0)
-        self.text_main = Label(self, text=self.text, justify=LEFT,
+        self.decorate = Frame(self, bg='blue', width=350, height=50)
+        self.decorate.place(x=0, y=0)
+        self.new_note = Label(self.decorate, text=self.text_title,
+                              bg='blue', fg='white')
+        self.new_note.place(x=10, y=15)
+        self.text_main = Label(self, text=self.text_note, justify=LEFT,
                                font=('AngsanaUPC', 18), padx=10, pady=10,
                                bg='gray')
-        self.text_main.grid(row=1, column=1)
+        self.text_main.place(x=30, y=100)
         self.quit = Button(self, text="OK", command=note_page.quit)
-        self.quit.grid(row=2, column=2)
+        self.quit.place(x=250, y=400)
 
         
 class MainApp(Tk):
@@ -103,6 +117,7 @@ class MainApp(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         self.find_b = PhotoImage(file="Find_button.gif")
+        self.date = date()
         self.window()
 
     def note_storage(self):
@@ -121,9 +136,10 @@ class MainApp(Tk):
         if title_name != '' and note_text != '':
             self.title_box.delete(0, END)
             self.note_box.delete('1.0', END)
-            note_page = Notepage(note_text)
-            note_page.geometry('400x400+450+90')
+            note_page = Notepage(title_name, note_text)
+            note_page.geometry('350x450+500+150')
             note_page.title('New note' + ' ' + ':' + ' ' + title_name)
+            note_page.resizable(width=False, height=False)
             note_page.note_pages(note_page)
             note_page.mainloop()
             note_page.destroy()
@@ -146,6 +162,8 @@ class MainApp(Tk):
         title = Label(self.header, text="NoteThat", font=('MV Boli', 25, 'bold')
                            , bg='#1E90FF', fg='white')
         title.place(x=15, y=5)
+        self.datetime = Label(self, text=self.date)
+        self.datetime.place(x=325, y=75)
 
         #Input#
         self.title_name = Label(self, text="Title", font=('Arial', 12,))
